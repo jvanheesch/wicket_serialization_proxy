@@ -8,12 +8,17 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class HomePage extends WebPage {
     private static final long serialVersionUID = -8896769873107976128L;
 
     public HomePage() {
-        this.add(new AStatelessLabel("message", "Hello World!"));
+        // no longer intresting
+        // this.add(new AStatelessLabel("message", "Hello World!"));
 
         // no longer needed, since Link.getStatelessHint() returns false, making this page stateful.
         // required to 'force' serialization: this.isPageStateless() returns true before executing the statement below, and false thereafter.
@@ -27,6 +32,21 @@ public class HomePage extends WebPage {
                 this.setResponsePage(new HomePage());
             }
         });
+
+        int branching = 2;
+        int depth = 14;
+        List<Integer> branchNumbers = IntStream.range(0, branching).boxed().collect(Collectors.toList());
+        this.add(new RecursiveListViewPanel("recursiveListViewPanel", branchNumbers, depth));
+    }
+
+    @Override
+    protected void onAfterRenderChildren() {
+        super.onAfterRenderChildren();
+
+        AtomicInteger nbOfItems = new AtomicInteger(0);
+        this.<RecursiveListViewPanel, AtomicInteger>visitChildren(RecursiveListViewPanel.class, (item, visit) -> nbOfItems.incrementAndGet());
+        // nbOfItems.get() == 2^(depth) - 1
+        System.out.println("Number of panels: " + nbOfItems.get());
     }
 
     /**
