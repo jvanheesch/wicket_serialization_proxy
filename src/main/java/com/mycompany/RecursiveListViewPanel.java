@@ -5,7 +5,11 @@ import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.EmptyPanel;
 import org.apache.wicket.markup.html.panel.Panel;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * This component has a tree-like structure:
@@ -17,6 +21,7 @@ class RecursiveListViewPanel extends Panel {
 
     private final List<Integer> branchNumbers;
     private final int depth;
+    private final Serializable someGarbageStateThatWillBeSerialized;
 
     RecursiveListViewPanel(String id, List<Integer> branchNumbers, int depth) {
         super(id);
@@ -24,6 +29,10 @@ class RecursiveListViewPanel extends Panel {
         this.depth = depth;
 
         this.add(new IntegerListView(branchNumbers, depth));
+
+        this.someGarbageStateThatWillBeSerialized = IntStream.range(0, 1000)
+                .boxed()
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private static class IntegerListView extends ListView<Integer> {
