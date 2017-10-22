@@ -2,6 +2,7 @@ package com.mycompany;
 
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.link.Link;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -14,8 +15,18 @@ public class HomePage extends WebPage {
     public HomePage() {
         this.add(new AStatelessLabel("message", "Hello World!"));
 
+        // no longer needed, since Link.getStatelessHint() returns false, making this page stateful.
         // required to 'force' serialization: this.isPageStateless() returns true before executing the statement below, and false thereafter.
-        this.setStatelessHint(false);
+        // this.setStatelessHint(false);
+
+        this.add(new Link<Void>("link") {
+            private static final long serialVersionUID = 227596780653601723L;
+
+            @Override
+            public void onClick() {
+                this.setResponsePage(new HomePage());
+            }
+        });
     }
 
     /**
