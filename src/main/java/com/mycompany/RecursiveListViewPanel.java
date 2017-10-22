@@ -5,6 +5,8 @@ import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.EmptyPanel;
 import org.apache.wicket.markup.html.panel.Panel;
 
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +35,9 @@ class RecursiveListViewPanel extends Panel {
         this.someGarbageStateThatWillBeSerialized = IntStream.range(0, 1000)
                 .boxed()
                 .collect(Collectors.toCollection(ArrayList::new));
+
+        // needed to prevent Page.checkHierarchyChange(this) [called in Page.replace(this)] from throwing WicketRuntimeException
+        this.setAuto(true);
     }
 
     private static class IntegerListView extends ListView<Integer> {
@@ -60,6 +65,32 @@ class RecursiveListViewPanel extends Panel {
             if (leftover < 0) {
                 throw new IllegalArgumentException();
             }
+        }
+    }
+
+    private Object writeReplace() {
+        return new RecursiveListViewPanelSerializationProxy(this.getId(), this.branchNumbers, this.depth);
+    }
+
+    private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+        throw new InvalidObjectException("Proxy required");
+    }
+
+    private static class RecursiveListViewPanelSerializationProxy implements Serializable {
+        private static final long serialVersionUID = 6844492640693436523L;
+
+        private final String id;
+        private final List<Integer> branchNumbers;
+        private final int depth;
+
+        private RecursiveListViewPanelSerializationProxy(String id, List<Integer> branchNumbers, int depth) {
+            this.id = id;
+            this.branchNumbers = branchNumbers;
+            this.depth = depth;
+        }
+
+        private Object readResolve() {
+            return new RecursiveListViewPanel(this.id, this.branchNumbers, this.depth);
         }
     }
 }

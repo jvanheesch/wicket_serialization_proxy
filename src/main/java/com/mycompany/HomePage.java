@@ -1,5 +1,6 @@
 package com.mycompany;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.Link;
@@ -37,6 +38,21 @@ public class HomePage extends WebPage {
         int depth = 14;
         List<Integer> branchNumbers = IntStream.range(0, branching).boxed().collect(Collectors.toList());
         this.add(new RecursiveListViewPanel("recursiveListViewPanel", branchNumbers, depth));
+    }
+
+    /**
+     * After stream.defaultReadObject(), this.getRecursiveListViewPanel() has parent null, which will result in:
+     * org.apache.wicket.markup.MarkupNotFoundException: Can not determine Markup. Component is not yet connected to a parent. [RecursiveListViewPanel [Component id = recursiveListViewPanel]]
+     * Calling this.getRecursiveListViewPanel().setParent(this) would solve this, but that's a dirty hack (as setParent's javadoc suggests).
+     * this.replace(this.getRecursiveListViewPanel()) seems like a clean way to reset the correct parent-child relationship.
+     */
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        this.replace(this.getRecursiveListViewPanel());
+    }
+
+    private Component getRecursiveListViewPanel() {
+        return this.get("recursiveListViewPanel");
     }
 
     @Override
